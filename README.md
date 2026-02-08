@@ -70,9 +70,6 @@ Task3 has higher priority to ensure emergency handling preempts all other system
 - Build and flash to target hardware
 - Use a serial console to observe system logs
 
-## Author
-Jett Lu
-
 ## Date
 December 2023
 
