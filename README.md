@@ -1,106 +1,78 @@
-# A Real-Time Embedded Emergency Management System
+# MCO556 FreeRTOS Multitasking Emergency Control System
+
+## Project Description (Short)
+A FreeRTOS based embedded system demonstrating multitasking, interrupt driven control, and priority based emergency handling on an NXP microcontroller. The project models a safety critical real time system with normal operation, emergency shutdown, and manual recovery using tasks, semaphores, software timers, and hardware timers.
 
 ## Overview
+This project was developed as a final project for MCO556 (Real Time Systems). It implements an event driven embedded controller with real time constraints using FreeRTOS. The system operates in two modes: regular operation and emergency mode. Emergency handling is designed to immediately preempt all non critical tasks, reflecting real world safety critical embedded systems.
 
-This project implements a shopping solution that consists of a server‐side console application and a client‐side Windows Forms application. The server handles product information, user accounts, and orders, while the client provides a user-friendly interface for product selection and purchases.
+## System Behavior
 
-## Features
+### Normal Operation
+- A FreeRTOS software timer periodically simulates sensor readings
+- Task1 processes sensor data
+- Task2 updates the display or user interface
+- Green LED indicates normal system operation
+- Alarm output is OFF
 
-### Server-Side
+### Emergency Operation
+- Triggered by pressing SW2 (GPIO interrupt)
+- Software timer is stopped immediately
+- Normal operation tasks are halted
+- A high priority emergency task preempts the system
+- Red LED flashes rapidly using a PIT hardware timer
+- External alarm indicator is enabled
+- System remains halted until manually cleared
 
-- **Console Application**  
-  Outputs server responses to the console before communicating with clients.
+### System Recovery
+- Pressing SW3 clears the emergency state
+- PIT timer is stopped
+- LEDs are reset to normal operation
+- Software timer restarts
+- Regular operation resumes
 
-- **Pre-defined Products**  
-  Initializes five products with random quantities (1–3) each time the server starts.
+---
 
-- **User Accounts**  
-  Supports at least three pre-defined user accounts, each with an account number and username.
+## Tasks and Priorities
 
-- **In-Memory Storage**  
-  Stores ordering information in variables (e.g., dictionaries or lists); data is disposed of when the server shuts down.
+| Task  | Function                         | Priority |
+|------|----------------------------------|----------|
+| Task1 | Sensor data processing           | Low      |
+| Task2 | Display update                   | Low      |
+| Task3 | Emergency protocol handling      | High     |
 
-- **Multi-client Support**  
-  Can handle multiple client connections simultaneously.
+Task3 has higher priority to ensure emergency handling preempts all other system activity.
 
-- **Protocol Handling**  
-  Processes client commands and sends appropriate responses.
+## FreeRTOS Features Used
+- Tasks and preemptive scheduling
+- Binary semaphores for synchronization
+- Software timers for periodic events
+- ISR safe FreeRTOS APIs
+- Priority based task preemption
+- Hardware timer integration (PIT)
 
-### Client-Side
+## Interrupts
+- SW2 GPIO interrupt triggers emergency shutdown
+- SW3 GPIO interrupt clears emergency and resumes operation
+- PIT timer interrupt toggles the red LED during emergency mode
 
-- **Windows Forms Application**  
-  Provides a graphical UI for users to select products and make purchases.
+## Hardware Indicators
+- Green LED: Normal operation
+- Red LED: Emergency flashing indicator
+- External LED (PTC16): Alarm indicator
 
-- **Login Form**  
-  Prompts for hostname/IP and account number (defaults to `localhost`).
+## File Structure
+- MCO556_Project_Lu.c Main application source file
 
-- **Error Handling**  
-  Displays errors if the server can’t be found or if login fails.
+## Build and Run
+- Requires NXP SDK and FreeRTOS
+- Configure board pins, clocks, and peripherals using MCUXpresso
+- Build and flash to target hardware
+- Use a serial console to observe system logs
 
-- **Product Information**  
-  Retrieves and displays product names and quantities upon successful connection.
+## Author
+Jett Lu
 
-- **Graceful Disconnection**  
-  Allows users to disconnect from the server and closes the application appropriately.
+## Date
+December 2023
 
-- **Purchase Management**  
-  Displays current purchase orders and handles purchase attempts, including error messaging for unavailable products.
-
-- **Asynchronous Communication**  
-  Ensures that server interactions do not block the GUI thread (using multithreading or async).
-
-## Protocol Standard
-
-- **DISCONNECT**  
-  - Server Response: No response.
-
-- **CONNECT:account_no**  
-  - Server Response:  
-    - `CONNECTED:user_name`  
-    - `CONNECT_ERROR`
-
-- **GET_PRODUCTS**  
-  - Server Response:  
-    - `PRODUCTS: product_name1,quantity1|...`  
-    - `NOT_CONNECTED`
-
-- **GET_ORDERS**  
-  - Server Response:  
-    - `ORDERS: product_name1,quantity1,user_name|...`  
-    - `NOT_CONNECTED`
-
-- **PURCHASE:product_name**  
-  - Server Response:  
-    - `NOT_AVAILABLE`  
-    - `NOT_VALID`  
-    - `NOT_CONNECTED`
-
-## Setup Instructions
-
-### Server-Side Setup
-
-1. Clone the repository:  
-   ```bash
-   git clone https://github.com/yourusername/shopping-solution.git
-   cd shopping-solution/Server
-   ```
-2. Restore and build (assuming .NET Core):  
-   ```bash
-   dotnet restore
-   dotnet build
-   ```
-3. Run the server:  
-   ```bash
-   dotnet run
-   ```
-
-### Client-Side Setup
-
-1. Open a new terminal and navigate to the client folder:  
-   ```bash
-   cd ../Client
-   ```
-2. Build and run the Windows Forms app:  
-   ```bash
-   dotnet run
-   ```
