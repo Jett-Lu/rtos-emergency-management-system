@@ -39,8 +39,6 @@ Binary semaphores enforce strict ordering between tasks.
 
 The system remains halted in this deterministic emergency condition until SW3 is pressed.
 
-<img width="1100" height="520" alt="image" src="https://github.com/user-attachments/assets/f04883e4-0013-449e-b076-9b2a1823724d" />
-
 ### Recovery State (Triggered by SW3 Interrupt)
 
 - PIT timer stopped  
