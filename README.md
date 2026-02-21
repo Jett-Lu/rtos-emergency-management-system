@@ -1,75 +1,185 @@
-# MCO556 FreeRTOS Multitasking Emergency Control System
-
-## Project Description (Short)
-A FreeRTOS based embedded system demonstrating multitasking, interrupt driven control, and priority based emergency handling on an NXP microcontroller. The project models a safety critical real time system with normal operation, emergency shutdown, and manual recovery using tasks, semaphores, software timers, and hardware timers.
+# FreeRTOS Emergency Control System  
+### Real-Time Multitasking Embedded System on NXP MCU
 
 ## Overview
-This project was developed as a final project for MCO556 (Real Time Systems). It implements an event driven embedded controller with real time constraints using FreeRTOS. The system operates in two modes: regular operation and emergency mode. Emergency handling is designed to immediately preempt all non critical tasks, reflecting real world safety critical embedded systems.
 
-## System Behavior
+This project implements a deterministic real-time embedded control system using FreeRTOS on an NXP microcontroller. The system simulates a safety-critical emergency workflow in which interrupt-driven events preempt normal system operation and enforce strict task sequencing.
 
-### Normal Operation
-- A FreeRTOS software timer periodically simulates sensor readings
-- Task1 processes sensor data
-- Task2 updates the display or user interface
-- Green LED indicates normal system operation
-- Alarm output is OFF
-
-### Emergency Operation
-- Triggered by pressing SW2 (GPIO interrupt)
-- Software timer is stopped immediately
-- Normal operation tasks are halted
-- A high priority emergency task preempts the system
-- Red LED flashes rapidly using a PIT hardware timer
-- External alarm indicator is enabled
-- System remains halted until manually cleared
-
-### System Recovery
-- Pressing SW3 clears the emergency state
-- PIT timer is stopped
-- LEDs are reset to normal operation
-- Software timer restarts
-- Regular operation resumes
+The design emphasizes preemptive scheduling, ISR-safe kernel interaction, hardware timer integration, and priority-based emergency handling under real-time constraints.
 
 ---
 
-## Tasks and Priorities
+## System States
 
-| Task  | Function                         | Priority |
-|------|----------------------------------|----------|
-| Task1 | Sensor data processing           | Low      |
-| Task2 | Display update                   | Low      |
-| Task3 | Emergency protocol handling      | High     |
+The system operates as a two-state real-time controller.
 
-Task3 has higher priority to ensure emergency handling preempts all other system activity.
+### 1. Normal Operation State
 
-## FreeRTOS Features Used
-- Tasks and preemptive scheduling
-- Binary semaphores for synchronization
-- Software timers for periodic events
-- ISR safe FreeRTOS APIs
-- Priority based task preemption
-- Hardware timer integration (PIT)
+- GREEN LED ON  
+- RED LED OFF  
+- Alarm output (PTC16) LOW  
+- FreeRTOS software timer executes every 2 seconds  
+- Task1 processes sensor data  
+- Task2 updates system display  
 
-## Interrupts
-- SW2 GPIO interrupt triggers emergency shutdown
-- SW3 GPIO interrupt clears emergency and resumes operation
-- PIT timer interrupt toggles the red LED during emergency mode
+Execution sequence:
 
-## Hardware Indicators
-- Green LED: Normal operation
-- Red LED: Emergency flashing indicator
-- External LED (PTC16): Alarm indicator
+Software Timer Callback → Task1 → Task2
 
-## File Structure
-- MCO556_Project_Lu.c Main application source file
+Tasks execute in a strictly controlled order using binary semaphores.
 
-## Build and Run
-- Requires NXP SDK and FreeRTOS
-- Configure board pins, clocks, and peripherals using MCUXpresso
-- Build and flash to target hardware
-- Use a serial console to observe system logs
+---
 
-## Date
-December 2023
+### 2. Emergency State (Triggered by SW2 Interrupt)
 
+- Software timer stopped from ISR context  
+- Task3 activated at higher priority  
+- GREEN LED OFF  
+- Alarm output HIGH  
+- RED LED blinking at 4 Hz via PIT hardware interrupt  
+- Task1 and Task2 halted  
+
+The system remains halted in this deterministic emergency condition until SW3 is pressed.
+
+---
+
+### 3. Recovery State (Triggered by SW3 Interrupt)
+
+- PIT timer stopped  
+- RED LED OFF  
+- GREEN LED ON  
+- Alarm output LOW  
+- Software timer restarted from ISR  
+- Normal task execution resumes  
+
+---
+
+## State Transition Diagram
+
+```
+Normal Operation
+        |
+        | SW2 Interrupt
+        v
+Emergency State (Timer Stopped, Task3 Active)
+        |
+        | SW3 Interrupt
+        v
+Normal Operation (Timer Restarted)
+```
+
+State transitions are driven exclusively by hardware interrupts to maintain deterministic behavior.
+
+---
+
+## Architecture
+
+### Core Components
+
+- FreeRTOS Software Timer (2 second period)
+- Task1 – Sensor Data Processing
+- Task2 – Display Update
+- Task3 – Emergency Protocol Handler
+- SW2 ISR – Emergency trigger
+- SW3 ISR – Recovery trigger
+- PIT Channel 0 ISR – 4 Hz LED blinking
+
+---
+
+## Concurrency Design
+
+Binary semaphores enforce strict execution order:
+
+- Timer callback releases Task1
+- Task1 releases Task2
+- SW2 ISR releases Task3
+- SW3 ISR restores normal scheduling
+
+Task3 is assigned higher priority to guarantee emergency preemption.
+
+Interrupt priorities are configured to respect:
+
+```
+configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY
+```
+
+ISR-safe APIs used:
+
+- xTimerStopFromISR
+- xTimerStartFromISR
+- xSemaphoreGiveFromISR
+
+This ensures safe interaction between interrupt context and the FreeRTOS scheduler.
+
+---
+
+## Real-Time Characteristics
+
+### Deterministic Halt Condition
+
+Stopping the software timer ensures Task1 and Task2 are no longer scheduled. This creates a true halted state for normal system logic while emergency handling remains active.
+
+### Hardware-Timed Emergency Signaling
+
+The RED LED blinking frequency is generated using PIT Channel 0 interrupts at:
+
+- 125 ms ON
+- 125 ms OFF
+- 4 Hz total frequency
+
+Blinking is hardware-driven to ensure timing precision independent of task scheduling.
+
+### Preemptive Emergency Handling
+
+Emergency logic executes with elevated priority, guaranteeing that critical behavior overrides standard processing tasks.
+
+---
+
+## Timing Overview
+
+| Component               | Timing Behavior              |
+|-------------------------|-----------------------------|
+| Software Timer         | 2 second periodic callback  |
+| PIT Interrupt          | 4 Hz LED toggle             |
+| Emergency Activation   | Immediate via ISR           |
+| System Resume          | Immediate via ISR           |
+
+The design avoids blocking delays inside ISRs and maintains proper separation between interrupt context and task context.
+
+---
+
+## Technical Concepts Demonstrated
+
+- Preemptive RTOS scheduling
+- Interrupt-driven system design
+- Binary semaphore synchronization
+- ISR-safe FreeRTOS API usage
+- Hardware timer configuration (PIT)
+- Priority-based task control
+- Deterministic state transitions
+- Embedded systems debugging
+
+---
+
+## Hardware Platform
+
+- NXP microcontroller (MCUXpresso environment)
+- Onboard RED and GREEN LEDs
+- Pushbuttons SW2 and SW3
+- External LED connected to PTC16 (alarm output)
+
+---
+
+## Build Environment
+
+- MCUXpresso IDE
+- FreeRTOS Kernel
+- NXP SDK drivers for GPIO and PIT
+
+This repository includes application source and configuration files. Build artifacts and auto-generated IDE files are intentionally excluded.
+
+---
+
+## Purpose
+
+This project demonstrates the implementation of a multitasking real-time embedded control system with strict state transitions and interrupt-driven emergency management. It highlights practical firmware engineering skills in RTOS design, synchronization, and hardware-level integration.

@@ -1,0 +1,15 @@
+# Build artifacts
+Debug
+Release
+.o
+.axf
+.map
+
+# Eclipse  MCUXpresso
+.metadata
+.settings
+.launch
+
+# OS files
+.DS_Store
+Thumbs.db
