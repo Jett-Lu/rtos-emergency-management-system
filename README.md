@@ -2,9 +2,6 @@
 ### Real-Time Multitasking Embedded System on NXP MCU
 
 <img width="1100" height="520" alt="image" src="https://github.com/user-attachments/assets/e1e89499-372c-442f-93dd-1ef8f58b313f" />
-
-This diagram illustrates the interrupt-driven state transitions between normal operation and the emergency handling state.
-
 ## Overview
 
 This project implements a deterministic real-time embedded control system using FreeRTOS on an NXP microcontroller. The system simulates a safety-critical emergency workflow in which interrupt-driven events preempt normal system operation and enforce strict task sequencing.
