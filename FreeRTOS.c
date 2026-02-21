@@ -1,8 +1,8 @@
 /*
-File: MCO556_Project_Lu.c
+File: FreeRTOS.c
 Authors: Jett Lu
 Date: 2023-12-04
-Description: A Multitasking System with Real-time Requirements - See the MCO556 Final Project document for details.
+Description: A Multitasking System with Real-time Requirements
 */
 
 #include <assert.h>
